@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple_touch_tab.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/icon_32.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/icon_16.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: true,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="MongoDB 进阶操作，包括索引、底层细节、mongoose库的使用等">
+<meta name="keywords" content="数据库,MongoDB">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Mongodb进阶">
+<meta property="og:url" content="https://blog.stonelyu.com/19-05-2018-mongodb-pro/index.html">
+<meta property="og:site_name" content="Stone&#39;s stones">
+<meta property="og:description" content="MongoDB 进阶操作，包括索引、底层细节、mongoose库的使用等">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://blog.stonelyu.com/19-05-2018-mongodb-pro/fullMVC.png">
+<meta property="og:updated_time" content="2019-05-22T09:53:49.911Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Mongodb进阶">
+<meta name="twitter:description" content="MongoDB 进阶操作，包括索引、底层细节、mongoose库的使用等">
+<meta name="twitter:image" content="https://blog.stonelyu.com/19-05-2018-mongodb-pro/fullMVC.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://blog.stonelyu.com/19-05-2018-mongodb-pro/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Mongodb进阶 | Stone's stones</title>
+  
+
+
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108541730-1"></script>
+  <script>
+    var host = window.location.hostname;
+    if (host !== "localhost" || !true) {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-108541730-1');
+    }
+  </script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stone's stones</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">石头的小石头们</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.stonelyu.com/19-05-2018-mongodb-pro/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stone Lyu">
+      <meta itemprop="description" content="到处捡来的小石头们">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stone's stones">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Mongodb进阶
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：19-05-2018 16:17:17" itemprop="dateCreated datePublished" datetime="2018-05-19T16:17:17+10:00">19-05-2018</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/tech/" itemprop="url" rel="index"><span itemprop="name">tech</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">7.8k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">7 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>MongoDB 进阶操作，包括索引、底层细节、<code>mongoose</code>库的使用等</p>
+</blockquote>
+<a id="more"></a>
+<h3 id="mongoDB-indexing"><a href="#mongoDB-indexing" class="headerlink" title="mongoDB indexing"></a>mongoDB indexing</h3><h4 id="indexing-索引"><a href="#indexing-索引" class="headerlink" title="indexing 索引"></a>indexing 索引</h4><ul>
+<li>在某个collection中的某个字段A的索引是一个可以在A中更有效率地找到需要的值的数据结构。</li>
+<li><p>一个索引包括：<figure class="highlight plain"><figcaption><span>pointer to data record)```  </span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">- index file is much smaller than the original file. 索引文件远远小于原始文件  </span><br><span class="line"></span><br><span class="line">#### mongoDB basic indexes / MongoDB的基本索引</span><br><span class="line"></span><br><span class="line">- the `_id` index / 主键`_id`的索引</span><br><span class="line">    1. `_id`is automatically indexed for all collections. `_id`会被自动索引</span><br><span class="line">    2. `_id` index enforces uniqueness for its keys. `_id`建索引要求其全是唯一的</span><br><span class="line">- indexing on other fields / 其他字段的索引</span><br><span class="line">    1. index can be created on any other field or combination of fields. 任何字段均可创建索引</span><br><span class="line">        - `db.&lt;collectionName&gt;.createIndex(&lt;fieldName&gt;: 1);`</span><br><span class="line">        - fieldName can be a simple field, array field or field of an embedded document (use dot notation) 字段名可以是单个字段、数组字段或者嵌入的document  </span><br><span class="line">            - `db.blog.createIndex(&#123;auther: 1&#125;);` //1为升序，降序为-1</span><br><span class="line">            - `db.blog.createIndex(&#123;tag: 1&#125;);`</span><br><span class="line">            - ```db.blog.createIndex(&#123;&quot;comments.auther&quot;: 1&#125;);</span><br></pre></td></tr></table></figure></p>
+<ol start="2">
+<li>additional properties can be specified for an index. 创建索引的时候可以加入其他的限制性属性<ul>
+<li>sparseness, uniqueness, background</li>
+</ul>
+</li>
+</ol>
+</li>
+<li>most MongoDB indexes are organized as B-Tree structure  </li>
+</ul>
+<h4 id="simgle-field-index"><a href="#simgle-field-index" class="headerlink" title="simgle field index"></a>simgle field index</h4><ul>
+<li><code>db.users.find({score: {&quot;$lt&quot;: 30}}).sort({score: -1});</code><ol>
+<li><code>users</code>: collection</li>
+<li><code>{score: {&quot;$lt&quot;: 30}}</code>: query criteria</li>
+<li><code>{score: -1}</code>: sort order</li>
+</ol>
+</li>
+</ul>
+<h4 id="compound-index-复合索引"><a href="#compound-index-复合索引" class="headerlink" title="compound index (复合索引)"></a>compound index (复合索引)</h4><ul>
+<li>复合索引是简单索引结构存放指向多个字段的参考的collection</li>
+<li>复合索引的字段的顺序非常重要：<ol>
+<li>索引是按第一个字段，第二个字段。。。以此类推的顺序进行排序的</li>
+<li>支持：<ul>
+<li><code>db.users.find({userid: &quot;ca2&quot;, score: {$gt: 30}});</code></li>
+<li><code>db.users.find({userid: &quot;ca2&quot;});</code></li>
+</ul>
+</li>
+<li>不支持：<ul>
+<li><code>db.users.find({score: 75});</code></li>
+</ul>
+</li>
+</ol>
+</li>
+</ul>
+<h3 id="database-–-data-layer"><a href="#database-–-data-layer" class="headerlink" title="database – data layer"></a>database – data layer</h3><h4 id="web-applications-–-database"><a href="#web-applications-–-database" class="headerlink" title="web applications – database"></a>web applications – database</h4><ul>
+<li>database tier in multi-tier(N-tier) application architecture<ol>
+<li>为当前应用存储数据</li>
+<li>CRUD operation 增删改查</li>
+</ol>
+</li>
+<li>database server/ DBMS<ol>
+<li>RDBMS (MySQL)</li>
+<li>NoSQL DBMS (MongoDB)</li>
+<li>choice of DBMS is crucial(关键)</li>
+</ol>
+</li>
+<li>express integrates with many DBMS express整合了很多DBMS<ul>
+<li>MySQL, PostagreSQL, MongoDB, Redis and so on</li>
+</ul>
+</li>
+</ul>
+<h4 id="database-drivers"><a href="#database-drivers" class="headerlink" title="database drivers"></a>database drivers</h4><ul>
+<li>all database management systems works like a “server” application<ol>
+<li>running on a host and waiting for connections from clients<ul>
+<li>simple command line and shell client</li>
+<li>GUI shell client</li>
+<li>program based client</li>
+</ul>
+</li>
+<li>different protocals db server used to communicate with their clients</li>
+</ol>
+</li>
+<li>all database management systems provide language based drivers to allow developers to write client in varous language<ol>
+<li>open/close connection</li>
+<li>translate between language specific construct(function, method) and database queries</li>
+<li>translate between language specific data types and database defined data types</li>
+</ol>
+</li>
+<li>MongoDB 提供很多原生驱动</li>
+</ul>
+<h4 id="higher-level-module-package"><a href="#higher-level-module-package" class="headerlink" title="higher level module/package"></a>higher level module/package</h4><ul>
+<li>the native db drivers provide basic supports for client side programming<ul>
+<li>powerful, flexible, but usually not easy to use</li>
+</ul>
+</li>
+<li>higher level modules usually provide more convenient ways to communicate with db servers<ul>
+<li>mongoose</li>
+</ul>
+</li>
+</ul>
+<h4 id="object-data-model-object-relational-model"><a href="#object-data-model-object-relational-model" class="headerlink" title="object data model/ object relational model"></a>object data model/ object relational model</h4><ul>
+<li>与数据库的交互方式：<ol>
+<li>使用原生查询语句</li>
+<li>使用object data model (ODM)/ object relational model (ORM)</li>
+</ol>
+</li>
+<li>将网站应用数据表示成object，再映射到数据库里<ol>
+<li>productivity 生产率：程序员更习惯于思考js对象而非数据库语法</li>
+<li>performance：mapping会比直接使用db semantics更慢</li>
+</ol>
+</li>
+<li>节点支持多种ODM/ORM解决方案<ul>
+<li>Mongoose：异步环境</li>
+</ul>
+</li>
+</ul>
+<h3 id="Mongoose"><a href="#Mongoose" class="headerlink" title="Mongoose"></a>Mongoose</h3><blockquote>
+<p>reference link: <a href="https://cnodejs.org/topic/504b4924e2b84515770103dd" target="_blank" rel="noopener">https://cnodejs.org/topic/504b4924e2b84515770103dd</a><br>考虑锁，所以使用事件驱动</p>
+</blockquote>
+<h4 id="Mongoose-basic-concepts"><a href="#Mongoose-basic-concepts" class="headerlink" title="Mongoose basic concepts"></a>Mongoose basic concepts</h4><ul>
+<li><code>schema</code>：</li>
+</ul>
+<blockquote>
+<p><em>一种以文件形式存储的数据库模型骨架，不具备数据库的操作能力。</em></p>
+</blockquote>
+<p><code>schema</code>模式: 一个定义<code>collection</code>中的<code>documents</code>的抽象数据结构</p>
+<p>每一个name/value pair就是一个路径(path)</p>
+<ul>
+<li><code>model</code>:</li>
+</ul>
+<blockquote>
+<p><em>由<code>Schema</code>发布生成的模型，具有抽象属性和行为的数据库操作对</em>  </p>
+</blockquote>
+<p><code>model</code>是编译过后的<code>schema</code>，<code>model</code>是<code>collection</code>绑定上<code>schema</code></p>
+<p><code>document</code>: <code>document</code>是<code>model</code>的实例与<code>collection</code>中的真实的<code>document</code>相连</p>
+<h4 id="example-of-schema-model-and-document"><a href="#example-of-schema-model-and-document" class="headerlink" title="example of schema, model and document"></a>example of schema, model and document</h4><ul>
+<li><p>if we have a collection “movies” with the example doucment:</p>
+  <figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&#123;   <span class="attr">"_id"</span>: <span class="number">1.0</span>,</span><br><span class="line">    <span class="attr">"title"</span>: <span class="string">"sense and sensibility"</span>,</span><br><span class="line">    <span class="attr">"year"</span>: <span class="number">1995.0</span>,</span><br><span class="line">    <span class="attr">"genres"</span>: [<span class="string">"comedy"</span>, <span class="string">"drama"</span>, <span class="string">"romance"</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>we can define the schema as:</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> movieSchema = <span class="keyword">new</span> Schema(&#123;</span><br><span class="line">    title: Stirng,</span><br><span class="line">    year: <span class="built_in">Number</span>,</span><br><span class="line">    genres: [<span class="built_in">String</span>]</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>the corresponding model:</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Movie = Mongoose.model(<span class="string">'movie'</span>,movieSchema, <span class="string">'movies'</span>)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>and document:</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> aMovie = <span class="keyword">new</span> Movie(&#123;</span><br><span class="line">    title = <span class="string">"ride with the devil"</span></span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="Query-Mongoose"><a href="#Query-Mongoose" class="headerlink" title="Query -Mongoose"></a>Query -Mongoose</h4><ul>
+<li><p>Mongoose所有的queries都在一个model中运行</p>
+<ol>
+<li>包括：<figure class="highlight plain"><figcaption><span>update, aggregate```等</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line">    2. 语法简单</span><br><span class="line">    3. 可能需要指定回掉函数</span><br><span class="line">    4. 两种运行回掉函数的方法：</span><br><span class="line">        - 回掉函数作为query参数：一旦回掉函数拿到返回值，函数将立即执行</span><br><span class="line">        - 回掉函数不作为query参数：一旦一个指定的query构造接口被创建，会返回一个query的实例</span><br><span class="line"></span><br><span class="line">#### Query with callback function</span><br><span class="line"></span><br><span class="line">    ```javascript</span><br><span class="line">    Movie.find(&#123;&#125;, function(err, movies)&#123;</span><br><span class="line">        if (err)&#123;</span><br><span class="line">            console.log(&quot;Query error!&quot;)</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            console.log(movies)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;)</span><br><span class="line">    ```  </span><br><span class="line"></span><br><span class="line">- the query was excuted immediately and the results passed to the callback</span><br><span class="line">    1. Mongoose的回掉语法：function(err, results)</span><br><span class="line">    2. 成功，毁掉函数参数中的```results```会被填入查询的结果，```err```会是null</span><br><span class="line">    3. 如果不成功，```err```会被填入错误文档，```results```会是null</span><br><span class="line">    4. 结果的类型和值取决于操作：```find()```返回document的list，```count()```返回document的数量，```update()```返回文档所受的更改</span><br><span class="line"></span><br><span class="line">#### Query instance -no callback passed</span><br><span class="line"></span><br><span class="line">- 允许使用链式语句进行查询而不只是json对象  </span><br><span class="line"></span><br><span class="line">- 链式:</span><br><span class="line"></span><br><span class="line">    ```javascript</span><br><span class="line">    Movie.find(&#123;Year: 1996&#125;)</span><br><span class="line">    .select(&#123;Title: 1, Year: 1&#125;)</span><br><span class="line">    .exec(function(err, results)&#123;</span><br><span class="line">        if (err)&#123;</span><br><span class="line">            console.log(&quot;query error&quot;);</span><br><span class="line">        &#125;else&#123;</span><br><span class="line">            console.log(&quot;Movies in year 1996: &quot;);</span><br><span class="line">            console.log(movies);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br></pre></td></tr></table></figure></li>
+</ol>
+</li>
+<li><p>json对象:</p>
+  <figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> query = Moviw.find(&#123;<span class="attr">Year</span>: <span class="number">1996</span>&#125;);</span><br><span class="line"></span><br><span class="line">query.select(&#123;<span class="attr">Title</span>: <span class="number">1</span>, <span class="attr">Year</span>: <span class="number">1</span>&#125;);</span><br><span class="line">query.exec(<span class="function"><span class="keyword">function</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (err)&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"query error"</span>);</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"Movies in year 1996: "</span>);</span><br><span class="line">        <span class="built_in">console</span>.log(movies);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+<h4 id="Queries-insert-documents"><a href="#Queries-insert-documents" class="headerlink" title="Queries -insert documents"></a>Queries -insert documents</h4><ul>
+<li>首先，基于<code>model</code>创建一个<code>document</code></li>
+<li>use <figure class="highlight plain"><figcaption><span>method to insert the new document</span></figcaption><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">- the model is linked to the collection, so it knows which collection to save this document to  </span><br><span class="line"></span><br><span class="line">   ```javascript</span><br><span class="line">   var newMovie = new Movie(</span><br><span class="line">   &#123;MovieID: 292,</span><br><span class="line">   title: &quot;outbreak&quot;,</span><br><span class="line">   year: 1995,</span><br><span class="line">   genres: [&apos;action&apos;, &apos;drama&apos;, &apos;sci-fi&apos;, &apos;thriller&apos;]</span><br><span class="line">   &#125;)</span><br><span class="line">   newMovie.save()</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="static-methods"><a href="#static-methods" class="headerlink" title="static methods"></a>static methods</h4><ul>
+<li>如果常对某collection进行某操作，我们可以将该操作实现为static method 或者 instance method</li>
+<li>static method 被定义在Model(collection)上，任何标准的query/aggregate 都可以被实现为static method</li>
+<li>static method提高数据库相关代码的复用率和模块化程度</li>
+</ul>
+<h4 id="static-method-example"><a href="#static-method-example" class="headerlink" title="static method -example"></a>static method -example</h4><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">movieSchema.statics.findByYear = <span class="function"><span class="keyword">function</span>(<span class="params">year, callback</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span> <span class="comment">//this指当前模块</span></span><br><span class="line">            .find(&#123;<span class="attr">Year</span>: year&#125;)</span><br><span class="line">            .select(&#123;<span class="attr">Title</span>: <span class="number">1</span>, <span class="attr">Year</span>: <span class="number">1</span>&#125;)</span><br><span class="line">            .exec(callback)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> Movie = Mongoose.model(<span class="string">'Movie'</span>, movieSchema, <span class="string">'movies'</span>)</span><br><span class="line">Movie.findByYear(<span class="number">1995</span>, <span class="function"><span class="keyword">function</span>(<span class="params">err, movies</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (err)&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"Query error!"</span>)</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"Movies in year 1995:"</span>)</span><br><span class="line">        <span class="built_in">console</span>.log(movies)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+<h4 id="instance-method"><a href="#instance-method" class="headerlink" title="instance method"></a>instance method</h4><ul>
+<li>instance method 定义在文件实例(document instance)上</li>
+<li>常被用于对给定的document创建queries</li>
+</ul>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">movieSchema.method.findSimilarYear = <span class="function"><span class="keyword">function</span>(<span class="params">cb</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>.model(<span class="string">'Movie'</span>).find(&#123;<span class="attr">Year</span>: <span class="keyword">this</span>.Year&#125;, callback);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">var</span> newMovie = <span class="keyword">new</span> Movie(</span><br><span class="line">    &#123;<span class="attr">MovieID</span>: <span class="number">292</span>,</span><br><span class="line">    Title: <span class="string">"outbreak"</span>,</span><br><span class="line">    Year: <span class="number">1995</span>,</span><br><span class="line">    Genres: [<span class="string">'action'</span>, <span class="string">'drama'</span>, <span class="string">'sci-fi'</span>, <span class="string">'thriller'</span>]&#125;</span><br><span class="line">);</span><br><span class="line"></span><br><span class="line">newMovie.findSimilarYear(<span class="function"><span class="keyword">function</span>(<span class="params">err, results</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (err)&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"Query error!"</span>)</span><br><span class="line">    &#125;<span class="keyword">else</span>&#123;</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">"the movie released in the same year as "</span> + newMovie.Title + <span class="string">"are: "</span>)</span><br><span class="line">        <span class="built_in">console</span>.log(movies)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h4 id="database-connection"><a href="#database-connection" class="headerlink" title="database connection"></a>database connection</h4><ul>
+<li>开启和关闭数据库很花时间-&gt;尽量减少数据库的打开和关闭</li>
+<li>最好的解决办法是：所有的请求分享一个连接池，在应用关闭的时候关闭这个连接池</li>
+<li>Mongoose会自动管理这个连接池</li>
+<li><p>不需要在app层面进行开闭操作</p>
+<ul>
+<li><p>连接数据库：<br><code>mongoose.connect(&#39;mongodb://username:password@host:port/database?options...&#39;);</code>  </p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> Mongoose = <span class="built_in">require</span>(<span class="string">'Mongoose'</span>)</span><br><span class="line">Mongoose.connect(<span class="string">'mongodb://localhost/comp5347'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">err</span>)</span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!err)</span><br><span class="line">        <span class="built_in">console</span>.log(<span class="string">'mongodb connected'</span>)</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<h4 id="full-MVC-architecture"><a href="#full-MVC-architecture" class="headerlink" title="full MVC architecture"></a>full MVC architecture</h4><img src="/19-05-2018-mongodb-pro/fullMVC.png">
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/数据库/" rel="tag"><i class="fa fa-tag"></i> 数据库</a>
+          
+            <a href="/tags/MongoDB/" rel="tag"><i class="fa fa-tag"></i> MongoDB</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/26-04-2018-mongodb/" rel="next" title="Mongodb 基本操作">
+                <i class="fa fa-chevron-left"></i> Mongodb 基本操作
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMzU4NC8xMDEzOQ=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stone Lyu">
+            
+              <p class="site-author-name" itemprop="name">Stone Lyu</p>
+              <div class="site-description motion-element" itemprop="description">到处捡来的小石头们</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stonelyu" title="GitHub &rarr; https://github.com/Stonelyu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                  
+                    
+                  
+                  <a href="mailto:mengyulyu@gmail.com" title="E-Mail &rarr; mailto:mengyulyu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.stonelyu.com" title="https://www.stonelyu.com" rel="noopener" target="_blank">Homepage</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#mongoDB-indexing"><span class="nav-number">1.</span> <span class="nav-text">mongoDB indexing</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#indexing-索引"><span class="nav-number">1.1.</span> <span class="nav-text">indexing 索引</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#simgle-field-index"><span class="nav-number">1.2.</span> <span class="nav-text">simgle field index</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#compound-index-复合索引"><span class="nav-number">1.3.</span> <span class="nav-text">compound index (复合索引)</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#database-–-data-layer"><span class="nav-number">2.</span> <span class="nav-text">database – data layer</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#web-applications-–-database"><span class="nav-number">2.1.</span> <span class="nav-text">web applications – database</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#database-drivers"><span class="nav-number">2.2.</span> <span class="nav-text">database drivers</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#higher-level-module-package"><span class="nav-number">2.3.</span> <span class="nav-text">higher level module/package</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#object-data-model-object-relational-model"><span class="nav-number">2.4.</span> <span class="nav-text">object data model/ object relational model</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Mongoose"><span class="nav-number">3.</span> <span class="nav-text">Mongoose</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Mongoose-basic-concepts"><span class="nav-number">3.1.</span> <span class="nav-text">Mongoose basic concepts</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#example-of-schema-model-and-document"><span class="nav-number">3.2.</span> <span class="nav-text">example of schema, model and document</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Query-Mongoose"><span class="nav-number">3.3.</span> <span class="nav-text">Query -Mongoose</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Queries-insert-documents"><span class="nav-number">3.4.</span> <span class="nav-text">Queries -insert documents</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#static-methods"><span class="nav-number">3.5.</span> <span class="nav-text">static methods</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#static-method-example"><span class="nav-number">3.6.</span> <span class="nav-text">static method -example</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#instance-method"><span class="nav-number">3.7.</span> <span class="nav-text">instance method</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#database-connection"><span class="nav-number">3.8.</span> <span class="nav-text">database connection</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#full-MVC-architecture"><span class="nav-number">3.9.</span> <span class="nav-text">full MVC architecture</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 – <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stone Lyu</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">34k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">31 分钟</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.1"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+  <script src="/js/js.cookie.js?v=7.1.1"></script>
+  <script src="/js/scroll-cookie.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+
+  
+    <script>
+  window.livereOptions = {
+    refer: '19-05-2018-mongodb-pro/'
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+<script>
+  $('.highlight').not('.gist .highlight').each(function(i, e) {
+    var $wrap = $('<div>').addClass('highlight-wrap');
+    $(e).after($wrap);
+    $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+      var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+        return $(e).text();
+      }).toArray().join('\n');
+      var ta = document.createElement('textarea');
+      var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+      ta.style.top = yPosition + 'px'; // Prevent page scroll
+      ta.style.position = 'absolute';
+      ta.style.opacity = '0';
+      ta.readOnly = true;
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, code.length);
+      ta.readOnly = false;
+      var result = document.execCommand('copy');
+      
+      ta.blur(); // For iOS
+      $(this).blur();
+    })).on('mouseleave', function(e) {
+      var $b = $(this).find('.copy-btn');
+      setTimeout(function() {
+        $b.text('复制');
+      }, 300);
+    }).append(e);
+  })
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

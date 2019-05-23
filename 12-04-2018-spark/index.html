@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple_touch_tab.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/icon_32.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/icon_16.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: true,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Spark Framework (apache spark 是为处理大规模数据而设计的快速通用计算引擎)">
+<meta name="keywords" content="Hadoop,spark">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spark 笔记">
+<meta property="og:url" content="https://blog.stonelyu.com/12-04-2018-spark/index.html">
+<meta property="og:site_name" content="Stone&#39;s stones">
+<meta property="og:description" content="Spark Framework (apache spark 是为处理大规模数据而设计的快速通用计算引擎)">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://blog.stonelyu.com/12-04-2018-spark/Chaining_MapReduce.png">
+<meta property="og:image" content="https://blog.stonelyu.com/12-04-2018-spark/Spark_RDD.png">
+<meta property="og:updated_time" content="2019-05-22T10:12:56.470Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Spark 笔记">
+<meta name="twitter:description" content="Spark Framework (apache spark 是为处理大规模数据而设计的快速通用计算引擎)">
+<meta name="twitter:image" content="https://blog.stonelyu.com/12-04-2018-spark/Chaining_MapReduce.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://blog.stonelyu.com/12-04-2018-spark/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>Spark 笔记 | Stone's stones</title>
+  
+
+
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108541730-1"></script>
+  <script>
+    var host = window.location.hostname;
+    if (host !== "localhost" || !true) {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-108541730-1');
+    }
+  </script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stone's stones</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">石头的小石头们</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.stonelyu.com/12-04-2018-spark/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stone Lyu">
+      <meta itemprop="description" content="到处捡来的小石头们">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stone's stones">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">Spark 笔记
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：12-04-2018 12:09:48" itemprop="dateCreated datePublished" datetime="2018-04-12T12:09:48+10:00">12-04-2018</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/tech/" itemprop="url" rel="index"><span itemprop="name">tech</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">12k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">11 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <blockquote>
+<p>Spark Framework (apache spark 是为处理大规模数据而设计的快速通用计算引擎)</p>
+</blockquote>
+<a id="more"></a>
+<h2 id="Data-sharing-and-job-chaining-in-MapReduce"><a href="#Data-sharing-and-job-chaining-in-MapReduce" class="headerlink" title="Data sharing and job chaining in MapReduce"></a>Data sharing and job chaining in MapReduce</h2><h3 id="data-sharing-in-MapReduce"><a href="#data-sharing-in-MapReduce" class="headerlink" title="data sharing in MapReduce"></a>data sharing in MapReduce</h3><ul>
+<li>mappers and reducers are designed to run independently on different partitions of input data on different nodes</li>
+<li>the API for mappers and reducers only takes input key value pairs as arguments</li>
+<li>how do we pass additional data?<br>  如取得中间的某个过程的结果</li>
+</ul>
+<h3 id="sharing-parameters"><a href="#sharing-parameters" class="headerlink" title="sharing parameters"></a>sharing parameters</h3><blockquote>
+<p><em>这里是在<code>Driver</code>, <code>Mapper</code>, <code>Reducer</code>之间传递用户输入的方法</em>  </p>
+</blockquote>
+<ul>
+<li>sharing parameters of simple type can be achieved using the <code>Configuration</code> object -&gt; 一些threshold value, 一些string值。 <code>configuration conf</code>是<code>MapReduce</code> 的配置对象。如下文所示可以传输<code>String</code>等信息</li>
+<li>in Java<ol>
+<li><code>driver</code> 会设置<code>configuration</code> 的属性 -&gt; 在<code>Driver</code>中使用以下代码:<br> <code>conf.set(&quot;mapper.plaveFilter.country&quot;, &quot;Austrilia&quot;)</code></li>
+<li><code>mapper</code>和<code>reducer</code>都可以读取:<br> <code>context.getConfiguration().get(&quot;mapper.placeFilter.country&quot;,&quot;Austrilia&quot;)</code></li>
+</ol>
+</li>
+</ul>
+<h3 id="Distributing-Auxiliary-Job-Data"><a href="#Distributing-Auxiliary-Job-Data" class="headerlink" title="Distributing Auxiliary Job Data"></a>Distributing Auxiliary Job Data</h3><ul>
+<li>auxiliary job data 辅助任务数据<ul>
+<li>一般来说，都会有一个小文件存放处理<code>map</code>任务的背景信息</li>
+<li>所有的<code>mapper</code>都需要读取这个文件</li>
+<li>这个文件必须足够小，能放进<code>mapper</code>的内存里</li>
+</ul>
+</li>
+<li>hadoop provides a mechanism for this purpose called the distributed cache –&gt; <code>distributed cache</code><ul>
+<li>文件存放在<code>distributed cache</code>分布式缓存里，<code>mapper</code>和<code>reducer</code>都可以读取</li>
+</ul>
+</li>
+<li>如果一个连接表(join table)小到足以放到内存里，那么分布式缓存可以提供一个高效的连接</li>
+</ul>
+<h3 id="chaining-jobs-链接任务"><a href="#chaining-jobs-链接任务" class="headerlink" title="chaining jobs 链接任务"></a>chaining jobs 链接任务</h3><ul>
+<li>多数时候，一个分析作业无法在单个MapReduce job中实现，所以我们需要链接多个任务</li>
+<li>in Java API<br>  在driver中链接，一个一个定义jobs，然后以正确的顺序上传他们</li>
+</ul>
+<h3 id="an-simple-select-join-example"><a href="#an-simple-select-join-example" class="headerlink" title="an simple select-join example"></a>an simple select-join example</h3><ul>
+<li>two inpit files:<ul>
+<li>Photo.csv: <code>photo_id | owner | tags | date_taken | place_id | accuracy</code></li>
+<li>Place.csv: <code>place_id | woeid | lat  | longi | place_name| place_url</code></li>
+</ul>
+</li>
+<li>find all photos taken in “Austrilia”</li>
+<li>assuming Place.csv is large, but subset containing “Austrilia” is quite small</li>
+<li>assuming photo.csv is very large</li>
+<li><p>two jobs:</p>
+<blockquote>
+<p>业务场景：两个join table，都很大。要找到A表的一个很小的子集在B表中对应的元素的值。</p>
+</blockquote>
+<ul>
+<li>第一：读取<code>place.csv</code>的数据，筛选在<code>place_url</code>字段里含”Austrilia”的行，并存为一个文件</li>
+<li>第二：使用分布式缓存将第一步的结果分布，然后将其连接到<code>photo.csv</code>上</li>
+</ul>
+</li>
+</ul>
+<h2 id="Spark-Basic-Concepts"><a href="#Spark-Basic-Concepts" class="headerlink" title="Spark Basic Concepts"></a>Spark Basic Concepts</h2><h3 id="Two-major-issues-with-MapReduce"><a href="#Two-major-issues-with-MapReduce" class="headerlink" title="Two major issues with MapReduce"></a>Two major issues with MapReduce</h3><ul>
+<li>Map/Reduce are storage based <ul>
+<li>Pro: 并行化，容错，可以在运行时决定在哪里运行。</li>
+<li>Con: 数据必须先储存才能运算。在不同的存储空间里有很大的数据传输。所有的中间量（中间介质）都必须被实体化。</li>
+<li><img src="/12-04-2018-spark/Chaining_MapReduce.png"></li>
+</ul>
+</li>
+<li>provide a simple set of API: map and reduce<ul>
+<li>Pro: 灵活，在map和reduce函数里可以实现很多不同的过程</li>
+<li>Con: 相同处理过程不可复用</li>
+</ul>
+</li>
+</ul>
+<h3 id="data-analytics-workload"><a href="#data-analytics-workload" class="headerlink" title="data analytics workload"></a>data analytics workload</h3><ul>
+<li>exploratory <ul>
+<li>总结数据集的主要特征</li>
+<li>在不同的列之间比较</li>
+<li>这些探索可能会揭露数据集的一些高层次的特性，可以帮助决策</li>
+</ul>
+</li>
+<li>predicitive <ul>
+<li>设置静态或机器学习的模块来帮助预测。</li>
+<li>绝大多数ML算法是迭代的：数据集会被反复扫描多次</li>
+<li>基于存储的MapReduce不适合这类算法</li>
+</ul>
+</li>
+</ul>
+<h3 id="beyond-MapReduce"><a href="#beyond-MapReduce" class="headerlink" title="beyond MapReduce"></a>beyond MapReduce</h3><ul>
+<li>尝试过两种解决办法：<ul>
+<li>一个是在探究时分析数据，在MapReduce上构造sql或类sql的层</li>
+<li>一个是探究并预测数据，基于分析系统的数据流</li>
+</ul>
+</li>
+</ul>
+<h2 id="Apache-Spark"><a href="#Apache-Spark" class="headerlink" title="Apache Spark"></a>Apache Spark</h2><ul>
+<li>in-memory framwork for interactive and iterative conputations. 基于内存的交互/迭代计算框架</li>
+<li>Goals: 为支持工作集(working set)的apps的集群提供分布式内存抽象；保持MapReduce的吸引力。</li>
+<li>Approach: 具有RDD(弹性分布式数据集)的增大数据流模型(RDD: 容错的，基于内存的存储抽象)；DataFrame之类的新型数据结构成为将来的主流</li>
+</ul>
+<h3 id="Spark-RDD-Programming-Model"><a href="#Spark-RDD-Programming-Model" class="headerlink" title="Spark RDD Programming Model"></a>Spark RDD Programming Model</h3><ul>
+<li><p><code>RDD</code>s (Resilient distributed datasets) 弹性分布式数据集。只读的，分区记录的集合。<br>  <code>RDD</code>只能基于在稳定物理存储中的数据集和其他已有的RDD上执行确定性操作来创建。这些确定性操作称之为转换，如<code>map</code>、<code>filter</code>、<code>groupBy</code>、<code>join</code>。<code>RDD</code>不需要物化。<code>RDD</code>含有如何从其他<code>RDD</code>衍生（即计算）出本<code>RDD</code>的相关信息（即<code>Lineage</code>），据此可以从物理存储的数据计算出相应的<code>RDD</code>分区。</p>
+<ul>
+<li>跨集群的不可变集合分区，如果分区丢失，可以重建</li>
+<li>通过使用数据流操作符（<code>map</code>, <code>filter</code>, <code>group-by</code>…）在稳定存储中创建转换数据</li>
+<li>能在并行操作中跨内存  </li>
+</ul>
+</li>
+</ul>
+<h3 id="resilient-distributed-datasets"><a href="#resilient-distributed-datasets" class="headerlink" title="resilient distributed datasets"></a>resilient distributed datasets</h3><ul>
+<li>RDDs are created by:<ul>
+<li>并行化现有的集合</li>
+<li>在拓展存储系统里引用一个数据集</li>
+</ul>
+</li>
+<li><p>RDDs have partitions</p>
+<ul>
+<li>基于源文件划分/分块/分割</li>
+<li><p>在转换时创建，重新分块</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//parallelizing existing collection</span></span><br><span class="line">List&lt;Integer&gt; data = Array.asList(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>);</span><br><span class="line">JavaRDD&lt;Integer&gt; distData = sc.parallelize(data); <span class="comment">//一维的</span></span><br><span class="line">JavaPairRDD&lt;Integer, String&gt; distData = sc.parallelize(data); <span class="comment">//二维的</span></span><br><span class="line"></span><br><span class="line"><span class="comment">//referencing a data set in HDFS</span></span><br><span class="line"><span class="comment">//sc是sparkContext 类型</span></span><br><span class="line">JavaRDD&lt;String&gt; ratingData = sc.textFile(<span class="string">"hdfs://localhost/share/ml/u.data"</span>); <span class="comment">//assignment1 直接读csv文件</span></span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<h3 id="Handling-Key-Value-Pairs"><a href="#Handling-Key-Value-Pairs" class="headerlink" title="Handling Key Value Pairs"></a>Handling Key Value Pairs</h3><ul>
+<li><code>Spark</code> 有特殊的<code>RDD</code>类型来处理key-value pair 数据：<ul>
+<li>在<code>Java</code>中， 从<code>Scala</code>标准库中使用<code>scala.Tuple2</code> 类</li>
+<li><code>RDD</code>的键值对处理表示为：<code>JavaPairRDD&lt;String, Integer&gt;</code></li>
+</ul>
+</li>
+<li><code>JavaPairRDD</code>是从规范<code>JavaRDD</code>中构造出来的</li>
+</ul>
+<h3 id="RDD-operations"><a href="#RDD-operations" class="headerlink" title="RDD operations"></a>RDD operations</h3><ul>
+<li>Transformation 转型/转换<ul>
+<li>从现有数据集构造一个新的</li>
+<li><code>map(func)</code>, <code>flatMap(func)</code>, <code>mapToPairs(func)</code>, <code>reduceByKey(func)</code>  <ul>
+<li><code>map</code>对应<code>JavaRDD</code>, 一一对应映射，输入一条输出一条  </li>
+<li><code>flatMap</code>对应<code>JavaRDD</code>, 输入一条，输出可以是多条，其中可以使用<code>split()</code>分成多条  </li>
+<li><code>mapToPairs</code> 对应<code>JavaPairRDD</code>, 一一对应，  </li>
+<li><code>reduceByKey</code> 对应<code>JavaPairRDD</code>，可以使用运算，多行数据变一行</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Action</p>
+<ul>
+<li>在对一个数据集进行运算后，将一个值返回给其<code>driver</code></li>
+<li><code>count()</code>, <code>first()</code>, <code>collect()</code>, <code>saveAsTextFile()</code><br>  <code>saveAsTextFile()</code>是输出函数  </li>
+</ul>
+</li>
+<li><p>Most RDD operations take one or more functions as parameter</p>
+</li>
+<li><p>Spark has strong dunctional programming flavour</p>
+</li>
+</ul>
+<h3 id="Spark-Program"><a href="#Spark-Program" class="headerlink" title="Spark Program"></a>Spark Program</h3><ul>
+<li><code>Spark</code> 就是拿来创建<code>SparkContext</code>对象的 -&gt; in java: <code>JavaSparkContext</code></li>
+<li><code>spark context</code> 提供数据输入输出的方法</li>
+<li>数据处理步骤通过使用<code>RDD transformation</code> 和 <code>actions</code> 来定义  </li>
+</ul>
+<h3 id="WordCount-in-Spark-in-Java"><a href="#WordCount-in-Spark-in-Java" class="headerlink" title="WordCount in Spark (in Java)"></a>WordCount in Spark (in Java)</h3><pre><code><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> java.util.Arrays;</span><br><span class="line"><span class="keyword">import</span> org.apache.spark.SparkConf;</span><br><span class="line"><span class="keyword">import</span> org.apache.spark.JavaSparkContext;</span><br><span class="line"><span class="keyword">import</span> org.apache.spark.JavaRDD;</span><br><span class="line"><span class="keyword">import</span> org.apache.spark.JavaPairRDD;</span><br><span class="line"></span><br><span class="line">publicclassWordCountExample&#123;</span><br><span class="line">    publicstaticvoidmain(String[]args) &#123;</span><br><span class="line">        SparkConfconf= <span class="keyword">new</span> SparkConf().setAppName(“WordcountExample”).setMaster(“…”);</span><br><span class="line"></span><br><span class="line">        JavaSparkContextsc= <span class="keyword">new</span> JavaSparkContext(conf);</span><br><span class="line"></span><br><span class="line">        JavaRDD&lt;String&gt; textFile= sc.textFile(<span class="string">"hdfs://..."</span>);</span><br><span class="line"></span><br><span class="line">        JavaPairRDD&lt;String, Integer&gt; counts = </span><br><span class="line">        textFile.flatMap(s -&gt; Arrays.asList(s.split(<span class="string">" "</span>)).iterator())	<span class="comment">//s 为输入，箭头以后为输出</span></span><br><span class="line">            .mapToPair(word -&gt; newTuple2&lt;&gt;(word, <span class="number">1</span>))</span><br><span class="line">            .reduceByKey((a, b) -&gt; a + b);	</span><br><span class="line">            <span class="comment">//输入a, b，输出是a+b, 自动匹配相同的key，一个key里不同的value累加</span></span><br><span class="line"></span><br><span class="line">        counts.saveAsTextFile(<span class="string">"hdfs://..."</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</code></pre><h3 id="Revisit-functional-programming"><a href="#Revisit-functional-programming" class="headerlink" title="Revisit: functional programming"></a>Revisit: functional programming</h3><h3 id="Anonymous-Functions-匿名函数"><a href="#Anonymous-Functions-匿名函数" class="headerlink" title="Anonymous Functions (匿名函数)"></a>Anonymous Functions (匿名函数)</h3><ul>
+<li>函数式参数可以用匿名函数简明地表达： <code>Java: map(a -&gt; 2*a);</code></li>
+<li>lambda 表达式</li>
+<li>Java8 开始支持匿名函数</li>
+</ul>
+<h3 id="Lambda-Expression"><a href="#Lambda-Expression" class="headerlink" title="Lambda Expression"></a>Lambda Expression</h3><ul>
+<li>lambda 在复杂函数中很难理解</li>
+<li>lambda 表达式只能被用于简单函数</li>
+<li>Java本身不含函数内容，声明函数必须定义一个函数类型的对象</li>
+</ul>
+<h3 id="lambda-in-java"><a href="#lambda-in-java" class="headerlink" title="lambda in java"></a>lambda in java</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// create an RDD from local file system as a collcectioof strings</span></span><br><span class="line">JavaRDD&lt;String&gt; lines = sc.textFile(<span class="string">"data.txt"</span>);</span><br><span class="line"><span class="comment">// create an RDD of Integer using the map transformation</span></span><br><span class="line"><span class="comment">// the transformation take a line as string and returns the number</span></span><br><span class="line"><span class="comment">// of characters</span></span><br><span class="line">JavaRDD&lt;Integer&gt; lineLengths= lines.map(s -&gt; s.length());</span><br><span class="line"><span class="comment">// call the reduce action to find total number of characterssin the file</span></span><br><span class="line">inttotalLength= lineLengths.reduce((a, b) -&gt; a + b);</span><br><span class="line"></span><br><span class="line"> <span class="comment">//在reduce 前加lineLengths.persist();可以让lineLengths在内存中被保留</span></span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*lambda表达式由以下内容构成：  </span></span><br><span class="line"><span class="comment">用括号括起来的逗号分隔的形式参数列表  </span></span><br><span class="line"><span class="comment">一个箭头标志 -&gt;  </span></span><br><span class="line"><span class="comment">一个由单个表达式或语句块组成的函数体  </span></span><br><span class="line"><span class="comment">*/</span></span><br><span class="line">(a, b) -&gt; &#123; <span class="keyword">if</span>(a==b)</span><br><span class="line">                <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">            <span class="keyword">if</span>(a&lt;b)</span><br><span class="line">                <span class="keyword">return</span> -<span class="number">1</span>;</span><br><span class="line">            <span class="keyword">return</span> <span class="number">1</span>;</span><br><span class="line">            &#125;</span><br></pre></td></tr></table></figure>
+<h3 id="RDD-operation-functional-argument"><a href="#RDD-operation-functional-argument" class="headerlink" title="RDD operation functional argument"></a>RDD operation functional argument</h3><p><strong>when to choose one or two parameter as the input of lambda expression?</strong><br>read the api document</p>
+<p><code>JavaRDD&lt;Integer&gt; lineLengths= lines.map(s -&gt; s.length());</code> 将<code>String</code> 变为 <code>int</code><br><code>inttotalLength= lineLengths.reduce((a, b) -&gt; a + b);</code> 将<code>(int, int)</code> 变为 <code>int</code></p>
+<p>map: <code>&lt;R&gt; JavaRDD &lt;R&gt; map(Function&lt;T, R&gt; f)</code> 返回一个新的RDD<br>reduce: <code>T reduce(Function2&lt;T,T,T&gt; f)</code>  reduce the element of this RDD  </p>
+<h2 id="a-complete-spark-application-example"><a href="#a-complete-spark-application-example" class="headerlink" title="a complete spark application example"></a>a complete spark application example</h2><h3 id="in-Java"><a href="#in-Java" class="headerlink" title="in Java"></a>in Java</h3><ul>
+<li>Spark RDD operation design<ul>
+<li><img src="/12-04-2018-spark/Spark_RDD.png"></li>
+</ul>
+</li>
+<li><p>Spark Application Code Snippet: 1</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">publicclassMovieLens&#123;</span><br><span class="line">    publicstaticvoidmain(String[] args) &#123;</span><br><span class="line">        String inputDataPath= args[<span class="number">0</span>], outputDataPath= args[<span class="number">1</span>];</span><br><span class="line"></span><br><span class="line">        <span class="comment">//Prepare Spark Context</span></span><br><span class="line">        SparkConfconf= newSparkConf();</span><br><span class="line">        conf.setAppName(<span class="string">"Movie Lens Application"</span>);</span><br><span class="line">        JavaSparkContextsc= newJavaSparkContext(conf);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//read ratings and movie data as JavaRDD&lt;String&gt;</span></span><br><span class="line">        JavaRDD&lt;String&gt; ratingData= sc.textFile(inputDataPath+<span class="string">"ratings.csv"</span>),</span><br><span class="line">        movieData= sc.textFile(inputDataPath+ <span class="string">"movies.csv"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="comment">//convert ratingDatato a key value pair RDD (mid, rating)</span></span><br><span class="line">        <span class="comment">//the text file format is: userId,movieId,rating,timestamp</span></span><br><span class="line">        JavaPairRDD&lt;String, Float&gt; ratingExtraction= ratingData.mapToPair(s-&gt;</span><br><span class="line">            &#123; String[] values= s.split(<span class="string">","</span>);</span><br><span class="line">                <span class="keyword">return</span> newTuple2&lt;String, Float&gt;(values[<span class="number">1</span>],Float.parseFloat(values[<span class="number">2</span>]));&#125;</span><br><span class="line">        );</span><br></pre></td></tr></table></figure>
+<ul>
+<li>In Java, a key value pair is wrapped as a type <code>Tuple2</code> (元组)</li>
+<li>The <code>mapToPair</code> transformation takes a function of type <code>PairFunction</code> as parameter, this function takes a parameter and returns a <code>Tuple2</code> object <code>mapToPair</code>变换将一个<code>PairFunction</code>类型的函数作为参数，并返回一个<code>Tuple2</code>类型的对象。  </li>
+</ul>
+</li>
+<li><p>Spark Application Code Snippet: 2</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//convert movieDatato a key value pair RDD of fomat(mid, genre)</span></span><br><span class="line"><span class="comment">//the text file format is: movieId,title,genre1|genre2|genre3</span></span><br><span class="line">JavaPairRDD&lt;String,String&gt; movieGenres= movieData.flatMapToPair(s-&gt;</span><br><span class="line">    &#123;String[] values= s.split(<span class="string">","</span>);</span><br><span class="line">    String movieID= values[<span class="number">0</span>];</span><br><span class="line">    intlength= values.length;</span><br><span class="line">    ArrayList&lt;Tuple2&lt;String,String&gt;&gt; results= <span class="keyword">new</span> ArrayList&lt;Tuple2&lt;String,String&gt;&gt;();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span>(length&gt;=<span class="number">3</span> )&#123; </span><br><span class="line">        <span class="comment">// genre list is present </span></span><br><span class="line">        String[] genres= values[length-<span class="number">1</span>].split(<span class="string">"\\|"</span>);</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span>(String genre: genres)&#123;</span><br><span class="line">            results.add(newTuple2&lt;String, String&gt;(movieID, genre));</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> results;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<ul>
+<li>A <code>map</code> or <code>mapToPair</code> transformation always expects a one-to-one mapping between the input and output. <code>map</code> 和 <code>mapToPair</code>转换在输入输出之间总是一一对应的/一对一的  </li>
+<li>If you need to filter the input by some condition and only return the value that satisfy the condition, you should use <code>filter</code> transformation. 如果你需要使用某些条件过滤输入，并总返回满足条件的值，你应该使用<code>filter</code>转换  </li>
+<li>If an input would produce 0 or more output, you should use <code>flatMap</code> or <code>flatMapToPair</code> transformation. 如果一个输入会产生0个或多个输出，你应该使用<code>flatMap</code>或者<code>flatMapToPair</code>转换</li>
+<li><p>The <code>flatMapToPair</code> transformation takes a function of type <code>PairFlatMapFunction</code> as parameter. This function takes a parameter and returns an <code>Iterable</code> collection of <code>Tuple2</code> objects. 如果<code>flatMapToPair</code>转换使用<code>PairFlatMapFunction</code>类型的函数作为参数，这个函数会返回一个<code>Tuple2</code>对象的<code>iterable</code>collection. 即：返回值是<code>Iterable&lt;Tuple2&gt;.</code></p>
+</li>
+<li><p><code>mapToPair</code> and <code>flatMapToPair</code></p>
+<ul>
+<li><code>mapToPair</code>: <code>&lt;k2, v2&gt; JavaPairRdd&lt;k2, v2&gt; mapToPair(PairFunction&lt;T, k2, v2&gt; f)</code> 返回一个RDD，通过将f作用于这个RDD的所有元素</li>
+<li><code>flatMapToPair</code>: <code>&lt;k2, v2&gt; JavaPairRdd&lt;k2, v2&gt; flatMapToPair(PairFunction&lt;T, k2, v2&gt; f)</code> 返回一个RDD，通过将f作用于这个RDD的所有元素，然后将result扁平化(flattening)</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>Spark Application Code Snippet 3:</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//join the two RDDs to find the ratings for each genre</span></span><br><span class="line"><span class="comment">//join function performs an inner join</span></span><br><span class="line"><span class="comment">//The result RDD would have the following format</span></span><br><span class="line"><span class="comment">//(movieID, (genre, rating))</span></span><br><span class="line">JavaPairRDD&lt;String, Tuple2&lt;String,Float&gt;&gt; joinResults = movieGenres.join(ratingExtraction);</span><br><span class="line"></span><br><span class="line"><span class="comment">//Join is based on movieID, which is not useful in our calculation</span></span><br><span class="line"><span class="comment">//We only want to retain the value which is (genre, rating) and</span></span><br><span class="line"><span class="comment">//convert it to a PairRDD</span></span><br><span class="line">JavaPairRDD&lt;String, Float&gt; joinResultsNoID= joinResults.values().mapToPair(v-&gt;v);</span><br><span class="line"></span><br><span class="line"><span class="comment">//joinResults.value()输入一个 Tuple2&lt;String, Float&gt; 类型的RDD，把一个Tuple2&lt;String, Float&gt; 转换成一个 Tuple2&lt;String, Float&gt;</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>Spark Application Code Snippet 4:</p>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">JavaPairRDDgenreRatingAvg= joinResultsNoID.aggregateByKey(</span><br><span class="line">    newTuple2&lt;Float, Integer&gt; (<span class="number">0.0f</span>,<span class="number">0</span>),</span><br><span class="line">    <span class="number">1</span>,</span><br><span class="line">    (v1,v2)-&gt; newTuple2&lt;Float, Integer&gt; (v1._1+ v2, v1._2+<span class="number">1</span>),</span><br><span class="line">    (v3,v4) -&gt; newTuple2&lt;Float,Integer&gt; (v3._1+ v4._1, v3._2+ v4._2))</span><br><span class="line">    .mapToPair(</span><br><span class="line">        t-&gt; newTuple2(t._1, (t._2._1* <span class="number">1.0</span> / t._2._2))</span><br><span class="line">    );</span><br><span class="line"></span><br><span class="line"><span class="comment">// this is an action</span></span><br><span class="line">genreRatingAvg.saveAsTextFile(outputDataPath+ <span class="string">"latest.rating.avg.per.genre"</span>);</span><br><span class="line">    sc.close();</span><br></pre></td></tr></table></figure>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//aggregateByKey</span></span><br><span class="line"><span class="keyword">public</span> &lt;U&gt; <span class="function">JavaPairRDD&lt;K, U&gt; <span class="title">aggregateByKey</span><span class="params">(U zeroValue,</span></span></span><br><span class="line"><span class="function"><span class="params">    <span class="keyword">int</span> numPartitions,</span></span></span><br><span class="line"><span class="function"><span class="params">    Function2&lt;U, V, U&gt; seqFunc,</span></span></span><br><span class="line"><span class="function"><span class="params">    Function2&lt;U, U, U&gt; combFunc)</span></span>;</span><br></pre></td></tr></table></figure>
+  <figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">JavaPairRDDgenreRatingAvg= joinResultsNoID.aggregateByKey(</span><br><span class="line">    newTuple2&lt;Float, Integer&gt; (<span class="number">0.0f</span>,<span class="number">0</span>),</span><br><span class="line">    <span class="number">1</span>,</span><br><span class="line">    (r,v)-&gt; newTuple2&lt;Float, Integer&gt; (r._1+ v2, r._2+<span class="number">1</span>),</span><br><span class="line">    (v1,v2) -&gt; newTuple2&lt;Float,Integer&gt; (v1._1+ v2._1, v1._2+ v2._2))</span><br><span class="line">        .mapToPair(</span><br><span class="line">            t-&gt; newTuple2(t._1, (t._2._1* <span class="number">1.0</span> / t._2._2))</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">    <span class="comment">// this is an action</span></span><br><span class="line">    genreRatingAvg.saveAsTextFile(outputDataPath+ <span class="string">"latest.rating.avg.per.genre"</span>);</span><br><span class="line">    sc.close();</span><br></pre></td></tr></table></figure>
+<p>  We want to use aggregateByKeyto find out the rating sum and rating count per genre.<br>  the sum and count can be stored in a Tuple2object of float and integer, initialized to 0.0 and 0.<br>  For each rating value, we increment the sum and the count respectively<br>  To merge two intermediate results, the partial sums are added up and the partial count added up<br>  A mapToPairtransformation is applied to calculate the average using the final sum and count  </p>
+</li>
+<li><p>需要用到的函数：</p>
+<ul>
+<li><code>groupByKey</code>: 输入为<code>(CountryID, &lt;Date, views&gt;)</code>，输出为：<code>Iterable</code>类型的<code>(CountryID, &lt;DateViews DateViews ...)</code></li>
+<li><code>sortByKey</code></li>
+</ul>
+</li>
+</ul>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag"><i class="fa fa-tag"></i> Hadoop</a>
+          
+            <a href="/tags/spark/" rel="tag"><i class="fa fa-tag"></i> spark</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/04-11-2017-photos-1/" rel="next" title="不一样的天空">
+                <i class="fa fa-chevron-left"></i> 不一样的天空
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/17-04-2018-MapReduce/" rel="prev" title="MapReduce基础知识">
+                MapReduce基础知识 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMzU4NC8xMDEzOQ=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stone Lyu">
+            
+              <p class="site-author-name" itemprop="name">Stone Lyu</p>
+              <div class="site-description motion-element" itemprop="description">到处捡来的小石头们</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stonelyu" title="GitHub &rarr; https://github.com/Stonelyu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                  
+                    
+                  
+                  <a href="mailto:mengyulyu@gmail.com" title="E-Mail &rarr; mailto:mengyulyu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.stonelyu.com" title="https://www.stonelyu.com" rel="noopener" target="_blank">Homepage</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Data-sharing-and-job-chaining-in-MapReduce"><span class="nav-number">1.</span> <span class="nav-text">Data sharing and job chaining in MapReduce</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#data-sharing-in-MapReduce"><span class="nav-number">1.1.</span> <span class="nav-text">data sharing in MapReduce</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#sharing-parameters"><span class="nav-number">1.2.</span> <span class="nav-text">sharing parameters</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Distributing-Auxiliary-Job-Data"><span class="nav-number">1.3.</span> <span class="nav-text">Distributing Auxiliary Job Data</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#chaining-jobs-链接任务"><span class="nav-number">1.4.</span> <span class="nav-text">chaining jobs 链接任务</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#an-simple-select-join-example"><span class="nav-number">1.5.</span> <span class="nav-text">an simple select-join example</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spark-Basic-Concepts"><span class="nav-number">2.</span> <span class="nav-text">Spark Basic Concepts</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Two-major-issues-with-MapReduce"><span class="nav-number">2.1.</span> <span class="nav-text">Two major issues with MapReduce</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#data-analytics-workload"><span class="nav-number">2.2.</span> <span class="nav-text">data analytics workload</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#beyond-MapReduce"><span class="nav-number">2.3.</span> <span class="nav-text">beyond MapReduce</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Apache-Spark"><span class="nav-number">3.</span> <span class="nav-text">Apache Spark</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Spark-RDD-Programming-Model"><span class="nav-number">3.1.</span> <span class="nav-text">Spark RDD Programming Model</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#resilient-distributed-datasets"><span class="nav-number">3.2.</span> <span class="nav-text">resilient distributed datasets</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Handling-Key-Value-Pairs"><span class="nav-number">3.3.</span> <span class="nav-text">Handling Key Value Pairs</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RDD-operations"><span class="nav-number">3.4.</span> <span class="nav-text">RDD operations</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Spark-Program"><span class="nav-number">3.5.</span> <span class="nav-text">Spark Program</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WordCount-in-Spark-in-Java"><span class="nav-number">3.6.</span> <span class="nav-text">WordCount in Spark (in Java)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Revisit-functional-programming"><span class="nav-number">3.7.</span> <span class="nav-text">Revisit: functional programming</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Anonymous-Functions-匿名函数"><span class="nav-number">3.8.</span> <span class="nav-text">Anonymous Functions (匿名函数)</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Lambda-Expression"><span class="nav-number">3.9.</span> <span class="nav-text">Lambda Expression</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#lambda-in-java"><span class="nav-number">3.10.</span> <span class="nav-text">lambda in java</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#RDD-operation-functional-argument"><span class="nav-number">3.11.</span> <span class="nav-text">RDD operation functional argument</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#a-complete-spark-application-example"><span class="nav-number">4.</span> <span class="nav-text">a complete spark application example</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#in-Java"><span class="nav-number">4.1.</span> <span class="nav-text">in Java</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 – <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stone Lyu</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">34k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">31 分钟</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.1"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+  <script src="/js/js.cookie.js?v=7.1.1"></script>
+  <script src="/js/scroll-cookie.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+
+  
+    <script>
+  window.livereOptions = {
+    refer: '12-04-2018-spark/'
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+<script>
+  $('.highlight').not('.gist .highlight').each(function(i, e) {
+    var $wrap = $('<div>').addClass('highlight-wrap');
+    $(e).after($wrap);
+    $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+      var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+        return $(e).text();
+      }).toArray().join('\n');
+      var ta = document.createElement('textarea');
+      var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+      ta.style.top = yPosition + 'px'; // Prevent page scroll
+      ta.style.position = 'absolute';
+      ta.style.opacity = '0';
+      ta.readOnly = true;
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, code.length);
+      ta.readOnly = false;
+      var result = document.execCommand('copy');
+      
+      ta.blur(); // For iOS
+      $(this).blur();
+    })).on('mouseleave', function(e) {
+      var $b = $(this).find('.copy-btn');
+      setTimeout(function() {
+        $b.text('复制');
+      }, 300);
+    }).append(e);
+  })
+</script>
+
+
+  
+
+  
+
+</body>
+</html>

@@ -1,0 +1,1152 @@
+<!DOCTYPE html>
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+
+<html class="theme-next pisces use-motion" lang="zh-CN">
+<head><meta name="generator" content="Hexo 3.8.0">
+  <meta charset="UTF-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2">
+
+<link rel="stylesheet" href="/css/main.css?v=7.1.1">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple_touch_tab.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/icon_32.png?v=7.1.1">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/icon_16.png?v=7.1.1">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=7.1.1" color="#222">
+
+
+
+
+
+
+
+<script id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Pisces',
+    version: '7.1.1',
+    sidebar: {"position":"left","display":"post","offset":12,"onmobile":false,"dimmer":false},
+    back2top: true,
+    back2top_sidebar: true,
+    fancybox: false,
+    fastclick: false,
+    lazyload: false,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+  
+
+
+
+
+  <meta name="description" content="Motivation for MapReduce process lots of data(&amp;gt;1TB) parallelize across make this easy automatic parallelization and distribution fault-tolerance 容错 -&amp;gt; 给的数据集里部分数据有问题 I/O scheduling status and mon">
+<meta name="keywords" content="Hadoop,MapReduce">
+<meta property="og:type" content="article">
+<meta property="og:title" content="MapReduce基础知识">
+<meta property="og:url" content="https://blog.stonelyu.com/17-04-2018-MapReduce/index.html">
+<meta property="og:site_name" content="Stone&#39;s stones">
+<meta property="og:description" content="Motivation for MapReduce process lots of data(&amp;gt;1TB) parallelize across make this easy automatic parallelization and distribution fault-tolerance 容错 -&amp;gt; 给的数据集里部分数据有问题 I/O scheduling status and mon">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https://blog.stonelyu.com/17-04-2018-MapReduce/typical.png">
+<meta property="og:image" content="https://blog.stonelyu.com/17-04-2018-MapReduce/Map.png">
+<meta property="og:image" content="https://blog.stonelyu.com/17-04-2018-MapReduce/MapReduce_overview.jpg">
+<meta property="og:image" content="https://blog.stonelyu.com/17-04-2018-MapReduce/shuffle.png">
+<meta property="og:updated_time" content="2019-05-23T06:38:58.087Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="MapReduce基础知识">
+<meta name="twitter:description" content="Motivation for MapReduce process lots of data(&amp;gt;1TB) parallelize across make this easy automatic parallelization and distribution fault-tolerance 容错 -&amp;gt; 给的数据集里部分数据有问题 I/O scheduling status and mon">
+<meta name="twitter:image" content="https://blog.stonelyu.com/17-04-2018-MapReduce/typical.png">
+
+
+
+
+
+  
+  
+  <link rel="canonical" href="https://blog.stonelyu.com/17-04-2018-MapReduce/">
+
+
+
+<script id="page.configurations">
+  CONFIG.page = {
+    sidebar: "",
+  };
+</script>
+
+  <title>MapReduce基础知识 | Stone's stones</title>
+  
+
+
+
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-108541730-1"></script>
+  <script>
+    var host = window.location.hostname;
+    if (host !== "localhost" || !true) {
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'UA-108541730-1');
+    }
+  </script>
+
+
+
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .motion-element,
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-title { opacity: initial; }
+
+  .use-motion .logo,
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-CN">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">Stone's stones</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+    
+      
+        <p class="site-subtitle">石头的小石头们</p>
+      
+    
+    
+  </div>
+
+  <div class="site-nav-toggle">
+    <button aria-label="切换导航栏">
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+
+
+<nav class="site-nav">
+  
+    <ul id="menu" class="menu">
+      
+        
+        
+        
+          
+          <li class="menu-item menu-item-home">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/" rel="section"><i class="menu-item-icon fa fa-fw fa-home"></i> <br>首页</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-about">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/about/" rel="section"><i class="menu-item-icon fa fa-fw fa-user"></i> <br>关于</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-tags">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/tags/" rel="section"><i class="menu-item-icon fa fa-fw fa-tags"></i> <br>标签</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-categories">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/categories/" rel="section"><i class="menu-item-icon fa fa-fw fa-th"></i> <br>分类</a>
+
+  </li>
+        
+        
+        
+          
+          <li class="menu-item menu-item-archives">
+
+    
+    
+    
+      
+    
+
+    
+
+    <a href="/archives/" rel="section"><i class="menu-item-icon fa fa-fw fa-archive"></i> <br>归档</a>
+
+  </li>
+
+      
+      
+    </ul>
+  
+
+  
+
+  
+</nav>
+
+
+
+  
+
+
+
+</div>
+    </header>
+
+    
+
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+            
+
+          
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="https://blog.stonelyu.com/17-04-2018-MapReduce/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="Stone Lyu">
+      <meta itemprop="description" content="到处捡来的小石头们">
+      <meta itemprop="image" content="/images/avatar.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Stone's stones">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">MapReduce基础知识
+
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+
+            
+            
+            
+
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+
+              
+                
+              
+
+              <time title="创建时间：17-04-2018 11:55:18" itemprop="dateCreated datePublished" datetime="2018-04-17T11:55:18+10:00">17-04-2018</time>
+            
+
+            
+          </span>
+
+          
+            <span class="post-category">
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/tech/" itemprop="url" rel="index"><span itemprop="name">tech</span></a></span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+            
+          
+
+          
+          
+
+          
+
+          
+            <div class="post-symbolscount">
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-file-word-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">本文字数：</span>
+                
+                <span title="本文字数">6.5k</span>
+              
+
+              
+                <span class="post-meta-divider">|</span>
+              
+
+              
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-clock-o"></i>
+                </span>
+                
+                  <span class="post-meta-item-text">阅读时长 &asymp;</span>
+                
+                <span title="阅读时长">6 分钟</span>
+              
+            </div>
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h2 id="Motivation-for-MapReduce"><a href="#Motivation-for-MapReduce" class="headerlink" title="Motivation for MapReduce"></a>Motivation for MapReduce</h2><ul>
+<li>process lots of data(&gt;1TB)</li>
+<li>parallelize across</li>
+<li>make this easy<ul>
+<li>automatic parallelization and distribution</li>
+<li>fault-tolerance 容错 -&gt; 给的数据集里部分数据有问题</li>
+<li>I/O scheduling</li>
+<li>status and monitoring</li>
+</ul>
+</li>
+</ul>
+<a id="more"></a>
+<h2 id="Embarrassingly-parallel-worklod"><a href="#Embarrassingly-parallel-worklod" class="headerlink" title="Embarrassingly parallel worklod"></a>Embarrassingly parallel worklod</h2><ul>
+<li>a general model:    <img src="/17-04-2018-MapReduce/typical.png"></li>
+<li><p>definition of Map, Reduce and Job:  </p>
+  <img src="/17-04-2018-MapReduce/Map.png">
+</li>
+<li><p>在<code>Hadoop</code>中，每个<code>MapReduce</code>任务都被初始化为一个<code>job</code>,每个<code>job</code>又可分为两个阶段: <code>map</code>阶段和<code>reduce</code>阶段。这两个阶段分别用两个函数来表示。</p>
+<ul>
+<li><code>map</code>函数接收一个<code>&lt;key,value&gt;</code>形式的输入，然后同样产生一个<code>&lt;key,value&gt;</code>形式的中间输出，<code>Hadoop</code>会负责将所有具有相同中间<code>key</code>值的<code>value</code>集合在一起传递给<code>reduce</code>函数，</li>
+<li><code>reduce</code>函数接收一个如<code>&lt;key,(list of values)&gt;</code>形式的输入，然后对这个<code>value</code>集合进行处理，每个<code>reduce</code>产生0或1个输出，<code>reduce</code>的输出也是<code>&lt;key,value&gt;</code>形式。</li>
+</ul>
+</li>
+<li>基本概念<ul>
+<li><code>Map</code>: 映射，接受一个键值对<code>(key-value pair)</code>，产生一组中间键值对。<code>MapReduce</code>框架会将<code>map</code>函数产生的中间键值对里键相同的值传递给一个reduce函数. (map的过程中会自动剔除损坏的数据)</li>
+<li><code>reduce</code>: 归约，接受一个键，以及相关的一组值，将这组值进行合并产生一组规模更小的值（通常只有一个或零个值）。</li>
+<li><code>shuffle</code>: 一个<code>map</code>产生的数据，结果通过<code>hash</code>过程分区却分配给了不同的<code>reduce</code>任务.</li>
+<li><code>job</code>: 任务，分<code>map</code>端和<code>reduce</code>端</li>
+</ul>
+</li>
+</ul>
+<h2 id="MapReduce-Programming-Model"><a href="#MapReduce-Programming-Model" class="headerlink" title="MapReduce Programming Model"></a>MapReduce Programming Model</h2><h3 id="Functional-Programming-Basics-函数式编程，这里主要是lambda函数"><a href="#Functional-Programming-Basics-函数式编程，这里主要是lambda函数" class="headerlink" title="Functional Programming Basics 函数式编程，这里主要是lambda函数"></a>Functional Programming Basics 函数式编程，这里主要是lambda函数</h3><h4 id="Functional-Programming"><a href="#Functional-Programming" class="headerlink" title="Functional Programming"></a>Functional Programming</h4><ul>
+<li>definition: 它将电脑运算视为函数的计算。函数编程语言最重要的基础是λ演算（lambda calculus），而且λ演算的函数可以接受函数当作输入（参数）和输出（返回值）。  </li>
+</ul>
+<h4 id="Big-Data-and-Functional-Programming"><a href="#Big-Data-and-Functional-Programming" class="headerlink" title="Big Data and Functional Programming"></a>Big Data and Functional Programming</h4><ul>
+<li>函数式编程和并行编程非常适配</li>
+</ul>
+<h4 id="feature-of-FP-函数式编程的特性-功能"><a href="#feature-of-FP-函数式编程的特性-功能" class="headerlink" title="feature of FP 函数式编程的特性/功能"></a>feature of FP 函数式编程的特性/功能</h4><ul>
+<li>不修改原有数据结构，直接创建新的数据对象，并一一映射过去</li>
+<li>高阶函数，把别的函数当成参数，并提供一个更简便的处理收集过程的方式</li>
+<li><em>在<code>MapReduce</code>中有两个非常有用的高阶函数：<code>map</code> and <code>fold</code>, or <code>reduce</code></em></li>
+</ul>
+<h5 id="higher-order-function-map"><a href="#higher-order-function-map" class="headerlink" title="higher-order function: map"></a>higher-order function: <code>map</code></h5><p><code>map</code>函数把一个给定函数应用于列表中所有的元素，并以新列表的形式返回结果,利用<code>map</code>函数可以很轻松地执行并发函数。  </p>
+<h5 id="higher-order-function-ford-reduce"><a href="#higher-order-function-ford-reduce" class="headerlink" title="higher-order function: ford/reduce"></a>higher-order function: <code>ford/reduce</code></h5><p><code>fold</code>函数可以从一个初始值开始，将一个给定函数迭代地作用于列表中的所有元素。返回的结果是从初始值迭代应用给定函数到最后一个元素的值。  </p>
+<h5 id="Reduce-Function-Parallel-Excution"><a href="#Reduce-Function-Parallel-Excution" class="headerlink" title="Reduce Function Parallel Excution"></a>Reduce Function Parallel Excution</h5><ul>
+<li>一般来讲，<code>reduce</code>函数是不可以并行化的，因为列表中的所有元素在产出最后结果的过程中都需要被访问到。  </li>
+<li>但在很多情况下，可以通过从子集中聚合(aggregate)局部结果来产出最终结果。  </li>
+<li>问题是：我们要如何去把reduce函数的输入分割成子集，尤其是当这些输入是前序map函数的输出的情况下，如何实现？</li>
+</ul>
+<h5 id="programming-model"><a href="#programming-model" class="headerlink" title="programming model"></a>programming model</h5><ul>
+<li><code>input</code> &amp; <code>output</code> 是一系列的key-value 键值对  </li>
+<li><p>程序员需要编写两个函数：</p>
+<ul>
+<li>map<ul>
+<li><code>map(in_key, in_value)</code> -&gt; <code>list(out_key, intermediate_value)</code></li>
+<li>处理输入的键值对，输出一个列表的介质对<code>(out_key, intermediate_value)</code></li>
+</ul>
+</li>
+<li>reduce<ul>
+<li><code>reduce(out_key, list(intermediate_value))</code> -&gt; <code>list(out_key, out_value)</code></li>
+<li>把某个确定的key的所有介质值全部组合起来</li>
+</ul>
+</li>
+<li>产出某一给定<code>key</code> 的一系列聚合输出值（通常只有一个）</li>
+</ul>
+</li>
+<li><p>这里的<code>key</code>是用来分割和分组<code>reduce</code>函数的输入的，使之更有效率</p>
+</li>
+<li><p>example:</p>
+<ul>
+<li><p>map:</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">map(String in_key, String in_value):</span><br><span class="line">    <span class="comment">// in_key: 文件名</span></span><br><span class="line">    <span class="comment">// in_value: 文件内容</span></span><br><span class="line">    <span class="keyword">for</span> each word w in input_value:</span><br><span class="line">        EmitIntermediate(w, <span class="string">"1"</span>); <span class="comment">//为之后的reduce过程存储媒介键值对，</span></span><br><span class="line">        <span class="comment">//通过从map_result哈希表中获取MapResult对像实现。</span></span><br><span class="line">        <span class="comment">//或创建一个新的MapResult对象，并把输出值加入到其中</span></span><br></pre></td></tr></table></figure>
+</li>
+<li><p>reduce</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">reduce(String out_key, Iterator intermediate_value):</span><br><span class="line">    <span class="comment">//out_key: a word</span></span><br><span class="line">    <span class="comment">//intermaediate_value: a list of counts associated with that word</span></span><br><span class="line">    <span class="keyword">int</span> result = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> each v in intermaediate_value:</span><br><span class="line">        result += ParseInt(v);</span><br><span class="line">    Emit(out_key, AsString(result));</span><br></pre></td></tr></table></figure>
+</li>
+</ul>
+</li>
+</ul>
+<h5 id="MapReduce-Excution-Overview"><a href="#MapReduce-Excution-Overview" class="headerlink" title="MapReduce Excution Overview:"></a>MapReduce Excution Overview:</h5><img src="/17-04-2018-MapReduce/MapReduce_overview.jpg">
+<h5 id="parallel-excution"><a href="#parallel-excution" class="headerlink" title="parallel excution"></a>parallel excution</h5><h5 id="the-combiner-function-组合器函数"><a href="#the-combiner-function-组合器函数" class="headerlink" title="the combiner function 组合器函数"></a>the combiner function 组合器函数</h5><ul>
+<li>组合器是一个在<code>map</code>和<code>reduce</code>之间最小化数据传输的优化机制</li>
+<li>组合器函数在<code>map</code>端运行，合并部分<code>map</code>的媒介结果</li>
+<li>组合器函数的输出是<code>reduce</code>函数的输入</li>
+</ul>
+<h2 id="Hadoop-MapReduce-Framework"><a href="#Hadoop-MapReduce-Framework" class="headerlink" title="Hadoop MapReduce Framework"></a>Hadoop MapReduce Framework</h2><h3 id="hadoop-basics"><a href="#hadoop-basics" class="headerlink" title="hadoop basics"></a>hadoop basics</h3><ul>
+<li>hadoop is a open source implementation of Google’s MapReduce Framework</li>
+<li>hadoop is writtten in java</li>
+<li>hadoop can run on a single machine<ul>
+<li>standalone model</li>
+<li>pseudo-distribute mode</li>
+</ul>
+</li>
+</ul>
+<h3 id="HDFS"><a href="#HDFS" class="headerlink" title="HDFS"></a>HDFS</h3><ul>
+<li><code>HDFS</code> 是一个分布式文件系统，</li>
+<li>由一个节点的集群组成<ul>
+<li>其中一个节点由特殊的角色，称为<code>name node</code></li>
+<li>其他所有的节点称<code>data nodes</code>，用于存储文件</li>
+<li><code>HDFS</code>在主文件系统的特定位置存放文件</li>
+</ul>
+</li>
+<li><code>HDFS</code>被设计来存大尺寸文件<ul>
+<li>大文件会被分成固定大小的小块，如128M</li>
+<li>小块被存在不同的数据节点下，这些小块可以重复</li>
+<li><code>name node</code>存放元数据，元素据会记录文件是由哪些块组成</li>
+</ul>
+</li>
+</ul>
+<h3 id="YARN-Framework-gt-一个通用的资源管理框架-gt-另一种资源导航器"><a href="#YARN-Framework-gt-一个通用的资源管理框架-gt-另一种资源导航器" class="headerlink" title="YARN Framework -&gt; 一个通用的资源管理框架 -&gt; 另一种资源导航器"></a>YARN Framework -&gt; 一个通用的资源管理框架 -&gt; 另一种资源导航器</h3><h4 id="YARN-concept"><a href="#YARN-concept" class="headerlink" title="YARN concept"></a>YARN concept</h4><ul>
+<li><code>YARN</code>是应用请求资源</li>
+<li><code>resource manager</code> 在集群的一个特殊节点上运行</li>
+<li>每一个节点都有<code>node manager</code>运行</li>
+<li>每一个<code>application</code> 都有一个 <code>ApplicationMaster</code><ul>
+<li>代表应用向集群请求资源</li>
+<li>监控应用的执行情况</li>
+<li>框架细节</li>
+</ul>
+</li>
+<li>资源请求 <code>resource request</code><ul>
+<li>主要是内存和CPU；主要依靠配置好的调度器</li>
+</ul>
+</li>
+<li>容器 <code>container</code><ul>
+<li>资源以容器的形式定位</li>
+<li>如：Java Process</li>
+</ul>
+</li>
+<li>默认配置<ul>
+<li>一个<code>node manager</code>有四个核心，每一个运行两个容器</li>
+<li><code>node manager</code>为<code>YARN</code>提供<code>8G</code>内存，每一个容器有<code>2G</code></li>
+<li>理论上一个节点可以运行<code>8</code>个容器</li>
+</ul>
+</li>
+</ul>
+<h3 id="Hadoop-MapReduce-Java-API"><a href="#Hadoop-MapReduce-Java-API" class="headerlink" title="Hadoop MapReduce Java API"></a>Hadoop MapReduce Java API</h3><ul>
+<li>map</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setMapperClass</span><span class="params">(class&lt;? extends Mapper&gt; cls)</span>   </span></span><br><span class="line"><span class="function"><span class="comment">// set the mapper for the job  </span></span></span><br><span class="line"><span class="function"><span class="comment">//这里输入是一个mapper的子类</span></span></span><br></pre></td></tr></table></figure>
+<ul>
+<li>reduce</li>
+</ul>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setReducerClass</span><span class="params">(class&lt;? extends Reducer&gt; cls)</span></span></span><br><span class="line"><span class="function"><span class="comment">// set the Reducer for the Job</span></span></span><br><span class="line"><span class="function"><span class="comment">// 这里输入是reducer的子类</span></span></span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">setNumReduceTasks</span><span class="params">(<span class="keyword">int</span> tasks)</span></span></span><br><span class="line"><span class="function"><span class="comment">//set the bunber of tasks for the job</span></span></span><br><span class="line"><span class="function"><span class="comment">//输入是整数，而且可以为0，为0时不进行reduce过程</span></span></span><br><span class="line"><span class="function"><span class="comment">//不为0时是reducer的个数</span></span></span><br></pre></td></tr></table></figure>
+<h3 id="Java-API-the-Mapper"><a href="#Java-API-the-Mapper" class="headerlink" title="Java API: the Mapper"></a>Java API: the Mapper</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">TagMapper</span></span></span><br><span class="line"><span class="class">    <span class="keyword">extends</span> <span class="title">Mapper</span>&lt;<span class="title">Object</span>, <span class="title">Text</span>, <span class="title">Text</span>, <span class="title">IntWritable</span>&gt;</span>&#123;</span><br><span class="line">    <span class="comment">//KeyIn, ValueIn, KeyOUt, ValueOut</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">static</span> IntWritable ONE = <span class="keyword">new</span> IntWritable(<span class="number">1</span>);</span><br><span class="line"></span><br><span class="line">    <span class="comment">//这里把IntWritable 设为1，是为了方便Reducer()中的累加，把每个key的值读出来，都是1，有几个1，则和为几</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//IntWritable是 Hadoop 中实现的用于封装 Java 数据类型的类,</span></span><br><span class="line">    <span class="comment">//它的原型是public IntWritable(int value)和public IntWritable()两种。</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">//所以new IntWritable(1)是创建了这个类的一个对象，而数值1这是参数。</span></span><br><span class="line">    <span class="comment">//在Hadoop中它相当于java中Integer整型变量，为这个变量赋值为1.</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> Text word = <span class="keyword">new</span> Text();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">map</span><span class="params">(Object key, Text value, Context context)</span></span></span><br><span class="line"><span class="function">       <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</span><br><span class="line">            String[] wordArray = value.toString().split(<span class="string">" "</span>);</span><br><span class="line"></span><br><span class="line">            <span class="keyword">for</span>(String term: wordArray)&#123;</span><br><span class="line">                word.set(term);</span><br><span class="line">                context.write(word, ONE);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//输入文件的每一行都会以值的形式提供给map函数</span></span><br><span class="line"><span class="comment">//context它是mapper的一个内部类，简单的说顶级接口是为了在map或是reduce任务中跟踪task的状态，</span></span><br><span class="line"><span class="comment">//很自然的MapContext就是记录了map执行的上下文，在mapper类中，这个context可以存储一些job conf的信息，</span></span><br><span class="line"><span class="comment">//比如job运行时参数等，我们可以在map函数中处理这个信息，这也是hadoop中参数传递中一个很经典的例子，</span></span><br><span class="line"><span class="comment">//同时context作为了map和reduce执行中各个函数的一个桥梁，这个设计和java web中的session对象、application对象很相似</span></span><br></pre></td></tr></table></figure>
+<h3 id="Java-API-the-Reducer"><a href="#Java-API-the-Reducer" class="headerlink" title="Java API: the Reducer"></a>Java API: the Reducer</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">IntSumReducer</span></span></span><br><span class="line"><span class="class">    <span class="keyword">extends</span> <span class="title">Reducer</span>&lt;<span class="title">Text</span>, <span class="title">IntWritable</span>, <span class="title">Text</span>, <span class="title">IntWritable</span>&gt;</span>&#123;</span><br><span class="line">    <span class="comment">// KeyIn, ValueIn,    KeyOUt, ValueOut</span></span><br><span class="line">    <span class="keyword">private</span> IntWritable result = <span class="keyword">new</span> IntWritable();</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reduce</span><span class="params">(Text key, Iterable&lt;IntWritable&gt; values, Context context)</span> </span></span><br><span class="line"><span class="function">        <span class="keyword">throws</span> IOException, InterruptedException </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">int</span> sum = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">for</span> (IntWritable val : values) &#123;</span><br><span class="line">            sum += val.get();</span><br><span class="line">        &#125;</span><br><span class="line">        result.set(sum);</span><br><span class="line">        context.write(key, result);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//the (key, list of values) passed to each reduce function</span></span><br></pre></td></tr></table></figure>
+<h3 id="Java-API-the-Driver"><a href="#Java-API-the-Driver" class="headerlink" title="Java API: the Driver"></a>Java API: the Driver</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WordCount</span></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Configuration conf = <span class="keyword">new</span> Configuration();</span><br><span class="line">        String[] otherArgs = <span class="keyword">new</span> GenericOptionsParser(conf, args).getRemainingArgs();</span><br><span class="line">        <span class="comment">//GenericOptionsParser(options, conf, args)函数可以解析用户指定的参数，</span></span><br><span class="line">        <span class="comment">//获取基本选项以及根据需要修改配置。</span></span><br><span class="line">        <span class="comment">//它首先指定每个通用选项的属性，然后解析选项，参数，</span></span><br><span class="line">        <span class="comment">//把它转化为命令行对象（CommandLine）,紧接着把设定好的命令行参数写入系统配置</span></span><br><span class="line">        <span class="keyword">if</span> (otherArgs.length != <span class="number">2</span>) &#123;</span><br><span class="line">            System.err.println(<span class="string">"Usage: WordCount &lt;in&gt; &lt;out&gt;"</span>);</span><br><span class="line">            System.exit(<span class="number">2</span>);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Job job = <span class="keyword">new</span> Job(conf);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h3 id="Communication-between-Mapper-and-Reducer"><a href="#Communication-between-Mapper-and-Reducer" class="headerlink" title="Communication between Mapper and Reducer"></a>Communication between Mapper and Reducer</h3><p><em>shuffle and sort in MapReduce</em><br><img src="/17-04-2018-MapReduce/shuffle.png"></p>
+<h3 id="Hadoop-Streaming"><a href="#Hadoop-Streaming" class="headerlink" title="Hadoop Streaming"></a>Hadoop Streaming</h3><ul>
+<li>Hadoop streaming 是为了用Java以外的语言使用hadoop而设计的。</li>
+</ul>
+
+      
+    </div>
+
+    
+
+    
+    
+    
+
+    
+
+    
+      
+    
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/Hadoop/" rel="tag"><i class="fa fa-tag"></i> Hadoop</a>
+          
+            <a href="/tags/MapReduce/" rel="tag"><i class="fa fa-tag"></i> MapReduce</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/12-04-2018-spark/" rel="next" title="Spark 笔记">
+                <i class="fa fa-chevron-left"></i> Spark 笔记
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/26-04-2018-mongodb/" rel="prev" title="Mongodb 基本操作">
+                Mongodb 基本操作 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+  </div>
+
+
+          </div>
+          
+
+  
+    <div class="comments" id="comments">
+      <div id="lv-container" data-id="city" data-uid="MTAyMC8zMzU4NC8xMDEzOQ=="></div>
+    </div>
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image" src="/images/avatar.jpg" alt="Stone Lyu">
+            
+              <p class="site-author-name" itemprop="name">Stone Lyu</p>
+              <div class="site-description motion-element" itemprop="description">到处捡来的小石头们</div>
+          </div>
+
+          
+            <nav class="site-state motion-element">
+              
+                <div class="site-state-item site-state-posts">
+                
+                  <a href="/archives/">
+                
+                    <span class="site-state-item-count">7</span>
+                    <span class="site-state-item-name">日志</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-categories">
+                  
+                    
+                      <a href="/categories/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">3</span>
+                    <span class="site-state-item-name">分类</span>
+                  </a>
+                </div>
+              
+
+              
+                
+                
+                <div class="site-state-item site-state-tags">
+                  
+                    
+                      <a href="/tags/">
+                    
+                  
+                    
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                      
+                    
+                    <span class="site-state-item-count">10</span>
+                    <span class="site-state-item-name">标签</span>
+                  </a>
+                </div>
+              
+            </nav>
+          
+
+          
+
+          
+
+          
+            <div class="links-of-author motion-element">
+              
+                <span class="links-of-author-item">
+                  
+                  
+                  
+                    
+                  
+                  <a href="https://github.com/Stonelyu" title="GitHub &rarr; https://github.com/Stonelyu" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i></a>
+                </span>
+              
+                <span class="links-of-author-item">
+                  
+                  
+                  
+                    
+                  
+                  <a href="mailto:mengyulyu@gmail.com" title="E-Mail &rarr; mailto:mengyulyu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i></a>
+                </span>
+              
+            </div>
+          
+
+          
+
+          
+          
+            <div class="links-of-blogroll motion-element links-of-blogroll-block">
+              <div class="links-of-blogroll-title">
+                <i class="fa  fa-fw fa-link"></i>
+                Links
+              </div>
+              <ul class="links-of-blogroll-list">
+                
+                  <li class="links-of-blogroll-item">
+                    <a href="https://www.stonelyu.com" title="https://www.stonelyu.com" rel="noopener" target="_blank">Homepage</a>
+                  </li>
+                
+              </ul>
+            </div>
+          
+
+          
+            
+          
+          
+
+        </div>
+      </div>
+
+      
+      <!--noindex-->
+        <div class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+            
+            
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Motivation-for-MapReduce"><span class="nav-number">1.</span> <span class="nav-text">Motivation for MapReduce</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Embarrassingly-parallel-worklod"><span class="nav-number">2.</span> <span class="nav-text">Embarrassingly parallel worklod</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MapReduce-Programming-Model"><span class="nav-number">3.</span> <span class="nav-text">MapReduce Programming Model</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Functional-Programming-Basics-函数式编程，这里主要是lambda函数"><span class="nav-number">3.1.</span> <span class="nav-text">Functional Programming Basics 函数式编程，这里主要是lambda函数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Functional-Programming"><span class="nav-number">3.1.1.</span> <span class="nav-text">Functional Programming</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Big-Data-and-Functional-Programming"><span class="nav-number">3.1.2.</span> <span class="nav-text">Big Data and Functional Programming</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#feature-of-FP-函数式编程的特性-功能"><span class="nav-number">3.1.3.</span> <span class="nav-text">feature of FP 函数式编程的特性/功能</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#higher-order-function-map"><span class="nav-number">3.1.3.1.</span> <span class="nav-text">higher-order function: map</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#higher-order-function-ford-reduce"><span class="nav-number">3.1.3.2.</span> <span class="nav-text">higher-order function: ford/reduce</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Reduce-Function-Parallel-Excution"><span class="nav-number">3.1.3.3.</span> <span class="nav-text">Reduce Function Parallel Excution</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#programming-model"><span class="nav-number">3.1.3.4.</span> <span class="nav-text">programming model</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#MapReduce-Excution-Overview"><span class="nav-number">3.1.3.5.</span> <span class="nav-text">MapReduce Excution Overview:</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#parallel-excution"><span class="nav-number">3.1.3.6.</span> <span class="nav-text">parallel excution</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#the-combiner-function-组合器函数"><span class="nav-number">3.1.3.7.</span> <span class="nav-text">the combiner function 组合器函数</span></a></li></ol></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Hadoop-MapReduce-Framework"><span class="nav-number">4.</span> <span class="nav-text">Hadoop MapReduce Framework</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#hadoop-basics"><span class="nav-number">4.1.</span> <span class="nav-text">hadoop basics</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#HDFS"><span class="nav-number">4.2.</span> <span class="nav-text">HDFS</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#YARN-Framework-gt-一个通用的资源管理框架-gt-另一种资源导航器"><span class="nav-number">4.3.</span> <span class="nav-text">YARN Framework -&gt; 一个通用的资源管理框架 -&gt; 另一种资源导航器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#YARN-concept"><span class="nav-number">4.3.1.</span> <span class="nav-text">YARN concept</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hadoop-MapReduce-Java-API"><span class="nav-number">4.4.</span> <span class="nav-text">Hadoop MapReduce Java API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java-API-the-Mapper"><span class="nav-number">4.5.</span> <span class="nav-text">Java API: the Mapper</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java-API-the-Reducer"><span class="nav-number">4.6.</span> <span class="nav-text">Java API: the Reducer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Java-API-the-Driver"><span class="nav-number">4.7.</span> <span class="nav-text">Java API: the Driver</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Communication-between-Mapper-and-Reducer"><span class="nav-number">4.8.</span> <span class="nav-text">Communication between Mapper and Reducer</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Hadoop-Streaming"><span class="nav-number">4.9.</span> <span class="nav-text">Hadoop Streaming</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </div>
+      <!--/noindex-->
+      
+
+      
+        <div class="back-to-top">
+          <i class="fa fa-arrow-up"></i>
+          
+            <span id="scrollpercent"><span>0</span>%</span>
+          
+        </div>
+      
+
+    </div>
+  </aside>
+  
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 – <span itemprop="copyrightYear">2019</span>
+  <span class="with-love" id="animate">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Stone Lyu</span>
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-area-chart"></i>
+    </span>
+    
+    <span title="站点总字数">34k</span>
+  
+
+  
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item-icon">
+      <i class="fa fa-coffee"></i>
+    </span>
+    
+    <span title="站点阅读时长">31 分钟</span>
+  
+</div>
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+
+    
+
+    
+
+    
+  </div>
+
+  
+
+<script>
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  <script src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+
+  
+
+
+  <script src="/js/utils.js?v=7.1.1"></script>
+
+  <script src="/js/motion.js?v=7.1.1"></script>
+
+
+
+  
+  
+
+
+  <script src="/js/affix.js?v=7.1.1"></script>
+
+  <script src="/js/schemes/pisces.js?v=7.1.1"></script>
+
+
+
+  
+  <script src="/js/scrollspy.js?v=7.1.1"></script>
+<script src="/js/post-details.js?v=7.1.1"></script>
+
+
+
+  
+
+
+  <script src="/js/next-boot.js?v=7.1.1"></script>
+
+
+  
+  <script src="/js/js.cookie.js?v=7.1.1"></script>
+  <script src="/js/scroll-cookie.js?v=7.1.1"></script>
+
+
+  
+
+  
+
+  
+
+
+  
+    <script>
+  window.livereOptions = {
+    refer: '17-04-2018-MapReduce/'
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+</script>
+
+  
+
+
+  
+
+
+
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+<script>
+  $('.highlight').not('.gist .highlight').each(function(i, e) {
+    var $wrap = $('<div>').addClass('highlight-wrap');
+    $(e).after($wrap);
+    $wrap.append($('<button>').addClass('copy-btn').append('复制').on('click', function(e) {
+      var code = $(this).parent().find('.code').find('.line').map(function(i, e) {
+        return $(e).text();
+      }).toArray().join('\n');
+      var ta = document.createElement('textarea');
+      var yPosition = window.pageYOffset || document.documentElement.scrollTop;
+      ta.style.top = yPosition + 'px'; // Prevent page scroll
+      ta.style.position = 'absolute';
+      ta.style.opacity = '0';
+      ta.readOnly = true;
+      ta.value = code;
+      document.body.appendChild(ta);
+      ta.select();
+      ta.setSelectionRange(0, code.length);
+      ta.readOnly = false;
+      var result = document.execCommand('copy');
+      
+      ta.blur(); // For iOS
+      $(this).blur();
+    })).on('mouseleave', function(e) {
+      var $b = $(this).find('.copy-btn');
+      setTimeout(function() {
+        $b.text('复制');
+      }, 300);
+    }).append(e);
+  })
+</script>
+
+
+  
+
+  
+
+</body>
+</html>
